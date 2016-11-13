@@ -3,7 +3,7 @@ import logging
 
 from pprint import pprint
 from src.yowsupextension import YowsupExtension
-
+from nameko.timer import timer
 
 class yowsup(object):
     name = "yowsup"
@@ -21,6 +21,11 @@ class yowsup(object):
         #logging.info(self.y)
         #output = self.y.sendCommand('Test')
         #logging.info(output)
+
+    @timer(interval=1)
+    def ping(self):
+        self.y.loop()
+
 
 
 
