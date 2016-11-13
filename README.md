@@ -51,9 +51,6 @@ startapi.sh
 Go to:
 http://127.0.0.1:5000/apidocs/index.html
 
-You will get the Messages from Whatsapp into the Queue "whatsapp-receive".
-
-Put the messages you want to send into the "whatsapp-send" Queue. The Format of the Messages is JSON.
 
 
 
