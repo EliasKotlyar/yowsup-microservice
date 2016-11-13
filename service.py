@@ -22,9 +22,6 @@ class yowsup(object):
         #output = self.y.sendCommand('Test')
         #logging.info(output)
 
-    @timer(interval=1)
-    def ping(self):
-        self.y.loop()
 
 
 

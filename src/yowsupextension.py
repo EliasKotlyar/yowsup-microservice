@@ -1,4 +1,5 @@
 import queue
+import threading
 
 import pexpect
 import logging
@@ -48,19 +49,25 @@ class YowsupExtension(DependencyProvider):
         self.stack.broadcastEvent(connectEvent)
 
 
-    def loop(self):
-        self.output('Timer Ping')
-        try:
-            #self.stack.loop(timeout = 0.5, discrete = 0.5)
-            self.stack.loop(timeout=0.5)
-        except AuthError as e:
-            self.output("Auth Error, reason %s" % e)
-            # Bugfix for : https://github.com/tgalal/yowsup/issues/978
-            exit()
-        except DuplicateMessageException as e:
-            self.output('Please delete .yowsup/<yournumber>/axolotl.db')
-            exit()
-        pass
+        def startThread():
+            try:
+                self.stack.loop(timeout=0.5, discrete=0.5)
+            except AuthError as e:
+                self.output("Auth Error, reason %s" % e)
+            except KeyboardInterrupt:
+                self.output("\nYowsdown KeyboardInterrupt")
+                exit(0)
+            except Exception as e:
+                self.output(e)
+                self.output("Whatsapp exited")
+                exit(0)
+
+        t1 = threading.Thread(target=startThread)
+        t1.daemon = True
+        t1.start()
+
+
+
 
 
     def sendTextMessage(self, address,message):

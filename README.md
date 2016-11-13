@@ -23,7 +23,11 @@ sudo apt-get install python3-pip python3-dev
 pip3 install nameko
 pip3 install flask
 pip3 install flasgger
-pip3 install git+https://github.com/tgalal/yowsup@master
+# Dont install from here due to https://github.com/tgalal/yowsup/issues/1613:
+#pip3 install git+https://github.com/tgalal/yowsup@master 
+pip install git+https://github.com/tawanda/yowsup.git#egg=yowsup
+
+
 # Install RabbitMQ
 apt-get install rabbitmq-server
 
