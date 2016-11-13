@@ -16,13 +16,20 @@ class YowsupExtension(DependencyProvider):
         self.shell = pexpect.spawn(startCommand)
         self.expect([".+\[offline\]:"])
         self.shell.sendline("/L")
+        login = self.expect([".+\[connected\]:","Login Failed"],5)
+        if(login == 2):
+            logging.info('Cannot login....cannot continue')
+            exit()
+
+
 
 
         return True
 
-    def expect(self,expectArr):
+    def expect(self,expectArr,timeout = 1):
         try:
-            i = self.shell.expect(expectArr,timeout=1)
+            i = self.shell.expect(expectArr,timeout=timeout)
+            i=i+1
         except:
             logging.info("Exception was thrown")
             logging.info("debug information:")
@@ -32,7 +39,7 @@ class YowsupExtension(DependencyProvider):
 
     def sendTextMessage(self, address,message):
         logging.info('Trying to send Message to %s:%s' % (address, message))
-        messageCommand = '/message send %s %s' % (address, message)
+        messageCommand = '/message send %s "%s"' % (address, message)
         self.shell.sendline(messageCommand)
         return True
 
