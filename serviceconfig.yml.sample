@@ -1,0 +1,7 @@
+AMQP_URI: 'pyamqp://guest:guest@localhost'
+WEB_SERVER_ADDRESS: '0.0.0.0:8000'
+YOWSUP_USERNAME: '49XXXX'
+YOWSUP_PASSWORD: 'XXXX'
+rpc_exchange: 'nameko-rpc'
+max_workers: 1
+parent_calls_tracked: 10

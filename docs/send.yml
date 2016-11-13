@@ -1,0 +1,26 @@
+Micro Service Based Yowsup API
+This API is made with Flask, Flasgger and Nameko
+---
+parameters:
+  - name: body
+    in: body
+    required: true
+    schema:
+      id: data
+      properties:
+        type:
+          type: string
+          enum:
+            - simple
+            - image
+          default: 'simple'
+        body:
+          type: string
+          default: 'This is a test Message'
+        address:
+          type: string
+          default: '490176xxxxxx'
+
+responses:
+  200:
+    description: It will send the message trough Whatsapp
