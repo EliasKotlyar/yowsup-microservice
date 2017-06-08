@@ -1,0 +1,4 @@
+nameko
+flask
+flasgger
+git+https://github.com/tgalal/yowsup@master

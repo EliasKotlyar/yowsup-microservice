@@ -65,3 +65,23 @@ Run
 nameko shell
 n.rpc.yowsup.send(type="simple", body="This is a test Message!", address="49XXXX")
 ```
+
+### Using Docker to run in a container
+
+This will automatically setup and run the main service and the API, connected with the RabbitMQ service!
+
+Change the following environment variables with your credentials (after registering on yowsup-cli).
+
+```
+environment:
+  - USERNAME=<your_account_number>
+  - PASSWORD=<your_password>
+```
+
+Then run:
+
+```
+docker stack deploy -c docker-compose.yml yowsup
+```
+
+And you're all set!! :D

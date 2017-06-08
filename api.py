@@ -3,10 +3,12 @@ from flasgger import Swagger
 from nameko.standalone.rpc import ClusterRpcProxy
 from flasgger.utils import swag_from
 import logging
+import os
+
 app = Flask(__name__)
 Swagger(app)
-CONFIG = {'AMQP_URI': "amqp://guest:guest@localhost"}
-
+CONFIG = {'AMQP_URI': None}
+CONFIG['AMQP_URI'] = os.environ['AMQP_URI']
 
 @app.route('/send', methods=['POST'])
 @swag_from('docs/send.yml')
@@ -24,4 +26,5 @@ def send():
     msg = "The message was sucessfully sended to the queue"
     return msg, 200
 
-app.run(debug=True)
+if __name__ == "__main__":
+	app.run(host='0.0.0.0', port=80)
