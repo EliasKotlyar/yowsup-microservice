@@ -1,7 +1,7 @@
-AMQP_URI: 'pyamqp://guest:guest@some-rabbit'
+AMQP_URI: !env_var '${AMQP_URI}'
 WEB_SERVER_ADDRESS: '0.0.0.0:8000'
-YOWSUP_USERNAME: '554491338525'
-YOWSUP_PASSWORD: 'sYCa/Q4+WvBFm4Foagd5Ge+GOhk='
+YOWSUP_USERNAME: !env_var '${USERNAME}'
+YOWSUP_PASSWORD: !env_var '${PASSWORD}'
 rpc_exchange: 'nameko-rpc'
 max_workers: 1
 parent_calls_tracked: 10

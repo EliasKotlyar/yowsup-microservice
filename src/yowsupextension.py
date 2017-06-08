@@ -23,7 +23,7 @@ class YowsupExtension(DependencyProvider):
 
 
 
-
+        logging.info('connected...')
         return True
 
     def expect(self,expectArr,timeout = 1):
