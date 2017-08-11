@@ -42,8 +42,7 @@ class SendReciveLayer(YowInterfaceLayer):
 
     ACCOUNT_DEL_WARNINGS = 4
     EVENT_SEND_MESSAGE = "org.openwhatsapp.yowsup.prop.queue.sendmessage"
-    EVENT_SEND_IMAGE = "org.openwhatsapp.yowsup.prop.queue.sendimage"
-
+    
     def __init__(self):
         super(SendReciveLayer, self).__init__()
         YowInterfaceLayer.__init__(self)
@@ -110,12 +109,12 @@ class SendReciveLayer(YowInterfaceLayer):
             return False
 
     #### batch cmds #####
-    def sendMessageAndDisconnect(self, credentials, jid, message):
-        self.disconnectAction = self.__class__.DISCONNECT_ACTION_EXIT
-        self.queueCmd("/login %s %s" % credentials)
-        self.queueCmd("/message send %s \"%s\" wait" % (jid, message))
-        self.queueCmd("/disconnect")
-        self.startInput()
+ #   def sendMessageAndDisconnect(self, credentials, jid, message):
+ #       self.disconnectAction = self.__class__.DISCONNECT_ACTION_EXIT
+ #       self.queueCmd("/login %s %s" % credentials)
+ #       self.queueCmd("/message send %s \"%s\" wait" % (jid, message))
+ #       self.queueCmd("/disconnect")
+ #       self.startInput()
 
     ######## receive #########
 
@@ -190,7 +189,7 @@ class SendReciveLayer(YowInterfaceLayer):
                         tag="Message %s" % message.getId())
 
     @EventCallback(EVENT_SEND_MESSAGE)
-    def onStateDisconnected(self, layerEvent):
+    def doSendMEssage(self, layerEvent):
         content = layerEvent.getArg("msg")
         number = layerEvent.getArg("number")
         self.output("Send Message to %s : %s" % (number, content))

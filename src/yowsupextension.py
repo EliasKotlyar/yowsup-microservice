@@ -30,10 +30,7 @@ class YowsupExtension(DependencyProvider):
             .push(SendReciveLayer) \
             .build()
 
-        # .push(YowMediaProtocolLayer) \
-
-
-
+ 
         self.stack.setCredentials(credentials)
         self.stack.setProp(PROP_IDENTITY_AUTOTRUST, True)
         #self.stack.broadcastEvent(YowLayerEvent(YowsupCliLayer.EVENT_START))
@@ -62,9 +59,6 @@ class YowsupExtension(DependencyProvider):
         t1.start()
 
 
-
-
-
     def sendTextMessage(self, address,message):
         self.output('Trying to send Message to %s:%s' % (address, message))
       
@@ -73,8 +67,7 @@ class YowsupExtension(DependencyProvider):
 
     def get_dependency(self, worker_ctx):
         return self
-    def output(self, str):
 
-        #print(str)
+    def output(self, str):
         logging.info(str)
         pass
