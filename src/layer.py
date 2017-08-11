@@ -21,8 +21,6 @@ from yowsup.layers.protocol_profiles.protocolentities import *
 from yowsup.common.tools import Jid
 from yowsup.common.optionalmodules import PILOptionalModule, AxolotlOptionalModule
 import urllib.request
-import json  
-
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +33,7 @@ class SendReciveLayer(YowInterfaceLayer):
     EVENT_START = "org.openwhatsapp.yowsup.event.cli.start"
     EVENT_SENDANDEXIT = "org.openwhatsapp.yowsup.event.cli.sendandexit"
 
-    MESSAGE_FORMAT = "[{FROM}({TIME})]:[{MESSAGE_ID}]\t {MESSAGE}"
+    MESSAGE_FORMAT = "{{\"from\":\"{FROM}\",\"time\":\"{TIME}\",\"id\":\"{MESSAGE_ID}\",\"message\":\"{MESSAGE}\"}}"
 
     FAIL_OPT_PILLOW = "No PIL library installed, try install pillow"
     FAIL_OPT_AXOLOTL = "axolotl is not installed, try install python-axolotl"
@@ -168,37 +166,33 @@ class SendReciveLayer(YowInterfaceLayer):
             messageOut = "Unknown message type %s " % message.getType()
             self.output(messageOut.toProtocolTreeNode())
 
-        formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%d-%m-%Y %H:%M')
+        formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
         sender = message.getFrom() if not message.isGroupMessage() else "%s/%s" % (
             message.getParticipant(False), message.getFrom())
         output = self.__class__.MESSAGE_FORMAT.format(
             FROM=sender,
             TIME=formattedDate,
-            MESSAGE=messageOut.encode('latin-1').decode() if sys.version_info >= (3, 0) else messageOut,
+            MESSAGE=messageOut.encode('utf8').decode() if sys.version_info >= (3, 0) else messageOut,
             MESSAGE_ID=message.getId()
         )
         
 
         req = urllib.request.Request(self.urlReSendMessage)
         req.add_header('Content-Type', 'application/json; charset=utf-8')
-        jsondata = json.dumps(output)
-        jsondataasbytes = jsondata.encode('utf-8')   # needs to be bytes
+
+        jsondataasbytes = output.encode('utf-8')   # needs to be bytes
         req.add_header('Content-Length', len(jsondataasbytes))
         req.add_header('TOKEN', self.tokenReSendMessage )
-        self.output(jsondataasbytes)
         response = urllib.request.urlopen(req, jsondataasbytes) 
         
-        
-     
         self.output(response.info())
-        self.output(response.read().decode()) 
-        
         
         self.output(output, tag=None, prompt=not self.sendReceipts)
         if self.sendReceipts:
             self.toLower(message.ack(self.sendRead))
             self.output("Sent delivered receipt" + " and Read" if self.sendRead else "",
                         tag="Message %s" % message.getId())
+
 
     @EventCallback(EVENT_SEND_MESSAGE)
     def doSendMEsage(self, layerEvent):

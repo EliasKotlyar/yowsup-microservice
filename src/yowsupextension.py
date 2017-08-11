@@ -49,6 +49,9 @@ class YowsupExtension(DependencyProvider):
                 self.stack.loop(timeout=0.5, discrete=0.5)
             except AuthError as e:
                 self.output("Auth Error, reason %s" % e)
+            except ValueError as e:  
+#                self.output("")
+                self.output(e);              
             except KeyboardInterrupt:
                 self.output("\nYowsdown KeyboardInterrupt")
                 exit(0)
