@@ -33,7 +33,7 @@ class SendReciveLayer(YowInterfaceLayer):
     EVENT_START = "org.openwhatsapp.yowsup.event.cli.start"
     EVENT_SENDANDEXIT = "org.openwhatsapp.yowsup.event.cli.sendandexit"
 
-    MESSAGE_FORMAT = "{{\"from\":\"{FROM}\",\"time\":\"{TIME}\",\"id\":\"{MESSAGE_ID}\",\"message\":\"{MESSAGE}\"}}"
+    MESSAGE_FORMAT = "{{\"from\":\"{FROM}\",\"time\":\"{TIME}\",\"id\":\"{MESSAGE_ID}\",\"message\":\"{MESSAGE}\",\"type\":\"{TYPE}\"}}"
 
     FAIL_OPT_PILLOW = "No PIL library installed, try install pillow"
     FAIL_OPT_AXOLOTL = "axolotl is not installed, try install python-axolotl"
@@ -173,7 +173,8 @@ class SendReciveLayer(YowInterfaceLayer):
             FROM=sender,
             TIME=formattedDate,
             MESSAGE=messageOut.encode('utf8').decode() if sys.version_info >= (3, 0) else messageOut,
-            MESSAGE_ID=message.getId()
+            MESSAGE_ID=message.getId(),
+            TYPE=message.getType()
         )
         
 
