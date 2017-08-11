@@ -24,7 +24,7 @@ from yowsup.common.optionalmodules import PILOptionalModule, AxolotlOptionalModu
 logger = logging.getLogger(__name__)
 
 
-class QueueLayer(YowInterfaceLayer):
+class SendReciveLayer(YowInterfaceLayer):
     PROP_RECEIPT_AUTO = "org.openwhatsapp.yowsup.prop.cli.autoreceipt"
     PROP_RECEIPT_KEEPALIVE = "org.openwhatsapp.yowsup.prop.cli.keepalive"
     PROP_CONTACT_JID = "org.openwhatsapp.yowsup.prop.cli.contact.jid"
@@ -44,8 +44,8 @@ class QueueLayer(YowInterfaceLayer):
     EVENT_SEND_MESSAGE = "org.openwhatsapp.yowsup.prop.queue.sendmessage"
     EVENT_SEND_IMAGE = "org.openwhatsapp.yowsup.prop.queue.sendimage"
 
-    def __init__(self, sendQueue):
-        super(QueueLayer, self).__init__()
+    def __init__(self):
+        super(SendReciveLayer, self).__init__()
         YowInterfaceLayer.__init__(self)
         self.accountDelWarnings = 0
         self.connected = False
@@ -55,7 +55,7 @@ class QueueLayer(YowInterfaceLayer):
         self.disconnectAction = self.__class__.DISCONNECT_ACTION_PROMPT
 
         self.credentials = None
-        self.sendQueue = sendQueue
+        
 
         # add aliases to make it user to use commands. for example you can then do:
         # /message send foobar "HI"
@@ -270,7 +270,7 @@ class QueueLayer(YowInterfaceLayer):
         pass
 
     def __str__(self):
-        return "CLI Interface Layer"
+        return "Send Recive Interface Layer"
 
     def output(self, str, tag="", prompt=""):
 
