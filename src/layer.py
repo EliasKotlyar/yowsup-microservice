@@ -20,6 +20,9 @@ from yowsup.layers.protocol_media.mediauploader import MediaUploader
 from yowsup.layers.protocol_profiles.protocolentities import *
 from yowsup.common.tools import Jid
 from yowsup.common.optionalmodules import PILOptionalModule, AxolotlOptionalModule
+import urllib.request
+import json  
+
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +46,7 @@ class SendReciveLayer(YowInterfaceLayer):
     ACCOUNT_DEL_WARNINGS = 4
     EVENT_SEND_MESSAGE = "org.openwhatsapp.yowsup.prop.queue.sendmessage"
     
-    def __init__(self):
+    def __init__(self,tokenReSendMessage,urlReSendMessage):
         super(SendReciveLayer, self).__init__()
         YowInterfaceLayer.__init__(self)
         self.accountDelWarnings = 0
@@ -55,6 +58,8 @@ class SendReciveLayer(YowInterfaceLayer):
 
         self.credentials = None
         
+        self.tokenReSendMessage=tokenReSendMessage
+        self.urlReSendMessage=urlReSendMessage
 
         # add aliases to make it user to use commands. for example you can then do:
         # /message send foobar "HI"
@@ -108,15 +113,6 @@ class SendReciveLayer(YowInterfaceLayer):
             self.output("Not connected", tag="Error", prompt=False)
             return False
 
-    #### batch cmds #####
- #   def sendMessageAndDisconnect(self, credentials, jid, message):
- #       self.disconnectAction = self.__class__.DISCONNECT_ACTION_EXIT
- #       self.queueCmd("/login %s %s" % credentials)
- #       self.queueCmd("/message send %s \"%s\" wait" % (jid, message))
- #       self.queueCmd("/disconnect")
- #       self.startInput()
-
-    ######## receive #########
 
     @ProtocolEntityCallback("chatstate")
     def onChatstate(self, entity):
@@ -164,13 +160,13 @@ class SendReciveLayer(YowInterfaceLayer):
     def onMessage(self, message):
         messageOut = ""
         if message.getType() == "text":
-            # self.output(message.getBody(), tag = "%s [%s]"%(message.getFrom(), formattedDate))
+            
             messageOut = self.getTextMessageBody(message)
         elif message.getType() == "media":
             messageOut = self.getMediaMessageBody(message)
         else:
             messageOut = "Unknown message type %s " % message.getType()
-            print(messageOut.toProtocolTreeNode())
+            self.output(messageOut.toProtocolTreeNode())
 
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%d-%m-%Y %H:%M')
         sender = message.getFrom() if not message.isGroupMessage() else "%s/%s" % (
@@ -181,7 +177,23 @@ class SendReciveLayer(YowInterfaceLayer):
             MESSAGE=messageOut.encode('latin-1').decode() if sys.version_info >= (3, 0) else messageOut,
             MESSAGE_ID=message.getId()
         )
+        
 
+        req = urllib.request.Request(self.urlReSendMessage)
+        req.add_header('Content-Type', 'application/json; charset=utf-8')
+        jsondata = json.dumps(output)
+        jsondataasbytes = jsondata.encode('utf-8')   # needs to be bytes
+        req.add_header('Content-Length', len(jsondataasbytes))
+        req.add_header('TOKEN', self.tokenReSendMessage )
+        self.output(jsondataasbytes)
+        response = urllib.request.urlopen(req, jsondataasbytes) 
+        
+        
+     
+        self.output(response.info())
+        self.output(response.read().decode()) 
+        
+        
         self.output(output, tag=None, prompt=not self.sendReceipts)
         if self.sendReceipts:
             self.toLower(message.ack(self.sendRead))
@@ -189,7 +201,7 @@ class SendReciveLayer(YowInterfaceLayer):
                         tag="Message %s" % message.getId())
 
     @EventCallback(EVENT_SEND_MESSAGE)
-    def doSendMEssage(self, layerEvent):
+    def doSendMEsage(self, layerEvent):
         content = layerEvent.getArg("msg")
         number = layerEvent.getArg("number")
         self.output("Send Message to %s : %s" % (number, content))
@@ -272,7 +284,5 @@ class SendReciveLayer(YowInterfaceLayer):
         return "Send Recive Interface Layer"
 
     def output(self, str, tag="", prompt=""):
-
-        # print(str)
         logging.info(str)
         pass

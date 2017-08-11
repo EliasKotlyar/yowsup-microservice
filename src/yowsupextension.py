@@ -22,12 +22,15 @@ class YowsupExtension(DependencyProvider):
         number = self.container.config['YOWSUP_USERNAME']
         password = self.container.config['YOWSUP_PASSWORD']
 
+        tokenReSendMessage = self.container.config['TOKEN_RESEND_MESSAGES']
+        urlReSendMessage = self.container.config['ENDPOINT_RESEND_MESSAGES']
+
         credentials = (number, password)  # replace with your phone and password
 
         stackBuilder = YowStackBuilder()
         self.stack = stackBuilder \
             .pushDefaultLayers(True) \
-            .push(SendReciveLayer) \
+            .push(SendReciveLayer(tokenReSendMessage,urlReSendMessage)) \
             .build()
 
  
