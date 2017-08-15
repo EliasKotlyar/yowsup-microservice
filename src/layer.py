@@ -196,7 +196,7 @@ class SendReciveLayer(YowInterfaceLayer):
 
 
     @EventCallback(EVENT_SEND_MESSAGE)
-    def doSendMEsage(self, layerEvent):
+    def doSendMesage(self, layerEvent):
         content = layerEvent.getArg("msg")
         number = layerEvent.getArg("number")
         self.output("Send Message to %s : %s" % (number, content))
@@ -206,9 +206,6 @@ class SendReciveLayer(YowInterfaceLayer):
             outgoingMessage = TextMessageProtocolEntity(
                 content.encode("utf-8") if sys.version_info >= (3, 0) else content, to=self.aliasToJid(number))
             self.toLower(outgoingMessage)
-
-
-
 
     def getTextMessageBody(self, message):
         return message.getBody()
@@ -226,54 +223,7 @@ class SendReciveLayer(YowInterfaceLayer):
             media_url=message.getMediaUrl()
         )
 
-    def doSendMedia(self, mediaType, filePath, url, to, ip=None, caption=None):
-        if mediaType == RequestUploadIqProtocolEntity.MEDIA_TYPE_IMAGE:
-            entity = ImageDownloadableMediaMessageProtocolEntity.fromFilePath(filePath, url, ip, to, caption=caption)
-        elif mediaType == RequestUploadIqProtocolEntity.MEDIA_TYPE_AUDIO:
-            entity = AudioDownloadableMediaMessageProtocolEntity.fromFilePath(filePath, url, ip, to)
-        elif mediaType == RequestUploadIqProtocolEntity.MEDIA_TYPE_VIDEO:
-            entity = VideoDownloadableMediaMessageProtocolEntity.fromFilePath(filePath, url, ip, to, caption=caption)
-        self.toLower(entity)
-
-    def __str__(self):
-        return "CLI Interface Layer"
-
     ########### callbacks ############
-
-    def onRequestUploadResult(self, jid, mediaType, filePath, resultRequestUploadIqProtocolEntity,
-                              requestUploadIqProtocolEntity, caption=None):
-
-        if resultRequestUploadIqProtocolEntity.isDuplicate():
-            self.doSendMedia(mediaType, filePath, resultRequestUploadIqProtocolEntity.getUrl(), jid,
-                             resultRequestUploadIqProtocolEntity.getIp(), caption)
-        else:
-            successFn = lambda filePath, jid, url: self.doSendMedia(mediaType, filePath, url, jid,
-                                                                    resultRequestUploadIqProtocolEntity.getIp(),
-                                                                    caption)
-            mediaUploader = MediaUploader(jid, self.getOwnJid(), filePath,
-                                          resultRequestUploadIqProtocolEntity.getUrl(),
-                                          resultRequestUploadIqProtocolEntity.getResumeOffset(),
-                                          successFn, self.onUploadError, self.onUploadProgress, async=False)
-            mediaUploader.start()
-
-    def onRequestUploadError(self, jid, path, errorRequestUploadIqProtocolEntity, requestUploadIqProtocolEntity):
-        logger.error("Request upload for file %s for %s failed" % (path, jid))
-
-    def onUploadError(self, filePath, jid, url):
-        logger.error("Upload file %s to %s for %s failed!" % (filePath, url, jid))
-
-    def onUploadProgress(self, filePath, jid, url, progress):
-        sys.stdout.write("%s => %s, %d%% \r" % (os.path.basename(filePath), jid, progress))
-        sys.stdout.flush()
-
-    def onGetContactPictureResult(self, resultGetPictureIqProtocolEntiy, getPictureIqProtocolEntity):
-        # do here whatever you want
-        # write to a file
-        # or open
-        # or do nothing
-        # write to file example:
-        # resultGetPictureIqProtocolEntiy.writeToFile("/tmp/yowpics/%s_%s.jpg" % (getPictureIqProtocolEntity.getTo(), "preview" if resultGetPictureIqProtocolEntiy.isPreview() else "full"))
-        pass
 
     def __str__(self):
         return "Send Recive Interface Layer"
