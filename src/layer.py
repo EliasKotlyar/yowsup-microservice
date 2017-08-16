@@ -26,22 +26,12 @@ logger = logging.getLogger(__name__)
 
 
 class SendReciveLayer(YowInterfaceLayer):
-    PROP_RECEIPT_AUTO = "org.openwhatsapp.yowsup.prop.cli.autoreceipt"
-    PROP_RECEIPT_KEEPALIVE = "org.openwhatsapp.yowsup.prop.cli.keepalive"
-    PROP_CONTACT_JID = "org.openwhatsapp.yowsup.prop.cli.contact.jid"
-    EVENT_LOGIN = "org.openwhatsapp.yowsup.event.cli.login"
-    EVENT_START = "org.openwhatsapp.yowsup.event.cli.start"
-    EVENT_SENDANDEXIT = "org.openwhatsapp.yowsup.event.cli.sendandexit"
+
 
     MESSAGE_FORMAT = "{{\"from\":\"{FROM}\",\"time\":\"{TIME}\",\"id\":\"{MESSAGE_ID}\",\"message\":\"{MESSAGE}\",\"type\":\"{TYPE}\"}}"
 
-    FAIL_OPT_PILLOW = "No PIL library installed, try install pillow"
-    FAIL_OPT_AXOLOTL = "axolotl is not installed, try install python-axolotl"
-
     DISCONNECT_ACTION_PROMPT = 0
-    DISCONNECT_ACTION_EXIT = 1
 
-    ACCOUNT_DEL_WARNINGS = 4
     EVENT_SEND_MESSAGE = "org.openwhatsapp.yowsup.prop.queue.sendmessage"
     
     def __init__(self,tokenReSendMessage,urlReSendMessage):
@@ -81,19 +71,6 @@ class SendReciveLayer(YowInterfaceLayer):
         self.getLayerInterface(YowAuthenticationProtocolLayer).setCredentials(username, password)
 
         return "%s@s.whatsapp.net" % username
-
-    @EventCallback(EVENT_START)
-    def onStart(self, layerEvent):
-        #self.startInput()
-        return True
-
-    @EventCallback(EVENT_SENDANDEXIT)
-    def onSendAndExit(self, layerEvent):
-        credentials = layerEvent.getArg("credentials")
-        target = layerEvent.getArg("target")
-        message = layerEvent.getArg("message")
-        self.sendMessageAndDisconnect(credentials, target, message)
-        return True
 
     @EventCallback(YowNetworkLayer.EVENT_STATE_DISCONNECTED)
     def onStateDisconnected(self, layerEvent):
