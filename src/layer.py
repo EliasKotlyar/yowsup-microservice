@@ -156,19 +156,20 @@ class SendReciveLayer(YowInterfaceLayer):
 
     @ProtocolEntityCallback("message")
     def onMessage(self, message):
+
         messageOut = ""
         if message.getType() == "text":
-            
             messageOut = self.getTextMessageBody(message)
         elif message.getType() == "media":
             messageOut = self.getMediaMessageBody(message)
         else:
             messageOut = "Unknown message type %s " % message.getType()
-            self.output(messageOut.toProtocolTreeNode())
 
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
         sender = message.getFrom() if not message.isGroupMessage() else "%s/%s" % (
             message.getParticipant(False), message.getFrom())
+        
+        # convert message to json
         output = self.__class__.MESSAGE_FORMAT.format(
             FROM=sender,
             TIME=formattedDate,
@@ -176,7 +177,6 @@ class SendReciveLayer(YowInterfaceLayer):
             MESSAGE_ID=message.getId(),
             TYPE=message.getType()
         )
-        
 
         req = urllib.request.Request(self.urlReSendMessage)
         req.add_header('Content-Type', 'application/json; charset=utf-8')
@@ -184,11 +184,16 @@ class SendReciveLayer(YowInterfaceLayer):
         jsondataasbytes = output.encode('utf-8')   # needs to be bytes
         req.add_header('Content-Length', len(jsondataasbytes))
         req.add_header('TOKEN', self.tokenReSendMessage )
-        response = urllib.request.urlopen(req, jsondataasbytes) 
-        
-        self.output(response.info())
+
+        # resend message to url from configuration
+        try:
+            response = urllib.request.urlopen(req, jsondataasbytes)
+            self.output(response.info())
+        except Exception as e:
+            self.output(e)
         
         self.output(output, tag=None, prompt=not self.sendReceipts)
+
         if self.sendReceipts:
             self.toLower(message.ack(self.sendRead))
             self.output("Sent delivered receipt" + " and Read" if self.sendRead else "",
