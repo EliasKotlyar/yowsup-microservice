@@ -30,7 +30,7 @@ class YowsupExtension(DependencyProvider):
         stackBuilder = YowStackBuilder()
         self.stack = stackBuilder \
             .pushDefaultLayers(True) \
-            .push(SendReciveLayer(tokenReSendMessage,urlReSendMessage)) \
+            .push(SendReciveLayer(tokenReSendMessage,urlReSendMessage,number)) \
             .build()
 
  

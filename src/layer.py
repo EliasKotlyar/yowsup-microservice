@@ -28,13 +28,13 @@ logger = logging.getLogger(__name__)
 class SendReciveLayer(YowInterfaceLayer):
 
 
-    MESSAGE_FORMAT = "{{\"from\":\"{FROM}\",\"time\":\"{TIME}\",\"id\":\"{MESSAGE_ID}\",\"message\":\"{MESSAGE}\",\"type\":\"{TYPE}\"}}"
+    MESSAGE_FORMAT = "{{\"from\":\"{FROM}\",\"to\":\"{TO}\",\"time\":\"{TIME}\",\"id\":\"{MESSAGE_ID}\",\"message\":\"{MESSAGE}\",\"type\":\"{TYPE}\"}}"
 
     DISCONNECT_ACTION_PROMPT = 0
 
     EVENT_SEND_MESSAGE = "org.openwhatsapp.yowsup.prop.queue.sendmessage"
     
-    def __init__(self,tokenReSendMessage,urlReSendMessage):
+    def __init__(self,tokenReSendMessage,urlReSendMessage,myNumber):
         super(SendReciveLayer, self).__init__()
         YowInterfaceLayer.__init__(self)
         self.accountDelWarnings = 0
@@ -43,7 +43,7 @@ class SendReciveLayer(YowInterfaceLayer):
         self.sendReceipts = True
         self.sendRead = True
         self.disconnectAction = self.__class__.DISCONNECT_ACTION_PROMPT
-
+        self.myNumber=myNumber
         self.credentials = None
         
         self.tokenReSendMessage=tokenReSendMessage
@@ -145,10 +145,11 @@ class SendReciveLayer(YowInterfaceLayer):
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
         sender = message.getFrom() if not message.isGroupMessage() else "%s/%s" % (
             message.getParticipant(False), message.getFrom())
-        
+               
         # convert message to json
         output = self.__class__.MESSAGE_FORMAT.format(
             FROM=sender,
+            TO=self.myNumber,
             TIME=formattedDate,
             MESSAGE=messageOut.encode('utf8').decode() if sys.version_info >= (3, 0) else messageOut,
             MESSAGE_ID=message.getId(),
