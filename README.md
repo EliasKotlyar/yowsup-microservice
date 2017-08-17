@@ -23,10 +23,8 @@ sudo apt-get install python3-pip python3-dev
 pip3 install nameko
 pip3 install flask
 pip3 install flasgger
-# Dont install from here due to https://github.com/tgalal/yowsup/issues/1613:
-#pip3 install git+https://github.com/tgalal/yowsup@master 
-pip install git+https://github.com/tawanda/yowsup.git#egg=yowsup
-
+# git+https://github.com/tgalal/yowsup@master works fine
+pip3 install git+https://github.com/tgalal/yowsup@master 
 
 # Install RabbitMQ
 apt-get install rabbitmq-server
@@ -80,6 +78,8 @@ Change the following environment variables with your credentials (after register
 environment:
   - USERNAME=<your_account_number>
   - PASSWORD=<your_password>
+  - TOKEN_RESEND_MESSAGES=<your_token_resend_messages>
+  - ENDPOINT_RESEND_MESSAGES=<your_endpoint_resend_messages>
 ```
 
 Then run:
