@@ -20,32 +20,22 @@ from yowsup.layers.protocol_media.mediauploader import MediaUploader
 from yowsup.layers.protocol_profiles.protocolentities import *
 from yowsup.common.tools import Jid
 from yowsup.common.optionalmodules import PILOptionalModule, AxolotlOptionalModule
+import urllib.request
 
 logger = logging.getLogger(__name__)
 
 
-class QueueLayer(YowInterfaceLayer):
-    PROP_RECEIPT_AUTO = "org.openwhatsapp.yowsup.prop.cli.autoreceipt"
-    PROP_RECEIPT_KEEPALIVE = "org.openwhatsapp.yowsup.prop.cli.keepalive"
-    PROP_CONTACT_JID = "org.openwhatsapp.yowsup.prop.cli.contact.jid"
-    EVENT_LOGIN = "org.openwhatsapp.yowsup.event.cli.login"
-    EVENT_START = "org.openwhatsapp.yowsup.event.cli.start"
-    EVENT_SENDANDEXIT = "org.openwhatsapp.yowsup.event.cli.sendandexit"
+class SendReciveLayer(YowInterfaceLayer):
 
-    MESSAGE_FORMAT = "[{FROM}({TIME})]:[{MESSAGE_ID}]\t {MESSAGE}"
 
-    FAIL_OPT_PILLOW = "No PIL library installed, try install pillow"
-    FAIL_OPT_AXOLOTL = "axolotl is not installed, try install python-axolotl"
+    MESSAGE_FORMAT = "{{\"from\":\"{FROM}\",\"to\":\"{TO}\",\"time\":\"{TIME}\",\"id\":\"{MESSAGE_ID}\",\"message\":\"{MESSAGE}\",\"type\":\"{TYPE}\"}}"
 
     DISCONNECT_ACTION_PROMPT = 0
-    DISCONNECT_ACTION_EXIT = 1
 
-    ACCOUNT_DEL_WARNINGS = 4
     EVENT_SEND_MESSAGE = "org.openwhatsapp.yowsup.prop.queue.sendmessage"
-    EVENT_SEND_IMAGE = "org.openwhatsapp.yowsup.prop.queue.sendimage"
-
-    def __init__(self, sendQueue):
-        super(QueueLayer, self).__init__()
+    
+    def __init__(self,tokenReSendMessage,urlReSendMessage,myNumber):
+        super(SendReciveLayer, self).__init__()
         YowInterfaceLayer.__init__(self)
         self.accountDelWarnings = 0
         self.connected = False
@@ -53,9 +43,11 @@ class QueueLayer(YowInterfaceLayer):
         self.sendReceipts = True
         self.sendRead = True
         self.disconnectAction = self.__class__.DISCONNECT_ACTION_PROMPT
-
+        self.myNumber=myNumber
         self.credentials = None
-        self.sendQueue = sendQueue
+        
+        self.tokenReSendMessage=tokenReSendMessage
+        self.urlReSendMessage=urlReSendMessage
 
         # add aliases to make it user to use commands. for example you can then do:
         # /message send foobar "HI"
@@ -80,19 +72,6 @@ class QueueLayer(YowInterfaceLayer):
 
         return "%s@s.whatsapp.net" % username
 
-    @EventCallback(EVENT_START)
-    def onStart(self, layerEvent):
-        #self.startInput()
-        return True
-
-    @EventCallback(EVENT_SENDANDEXIT)
-    def onSendAndExit(self, layerEvent):
-        credentials = layerEvent.getArg("credentials")
-        target = layerEvent.getArg("target")
-        message = layerEvent.getArg("message")
-        self.sendMessageAndDisconnect(credentials, target, message)
-        return True
-
     @EventCallback(YowNetworkLayer.EVENT_STATE_DISCONNECTED)
     def onStateDisconnected(self, layerEvent):
         self.output("Disconnected: %s" % layerEvent.getArg("reason"))
@@ -109,15 +88,6 @@ class QueueLayer(YowInterfaceLayer):
             self.output("Not connected", tag="Error", prompt=False)
             return False
 
-    #### batch cmds #####
-    def sendMessageAndDisconnect(self, credentials, jid, message):
-        self.disconnectAction = self.__class__.DISCONNECT_ACTION_EXIT
-        self.queueCmd("/login %s %s" % credentials)
-        self.queueCmd("/message send %s \"%s\" wait" % (jid, message))
-        self.queueCmd("/disconnect")
-        self.startInput()
-
-    ######## receive #########
 
     @ProtocolEntityCallback("chatstate")
     def onChatstate(self, entity):
@@ -163,34 +133,53 @@ class QueueLayer(YowInterfaceLayer):
 
     @ProtocolEntityCallback("message")
     def onMessage(self, message):
+
         messageOut = ""
         if message.getType() == "text":
-            # self.output(message.getBody(), tag = "%s [%s]"%(message.getFrom(), formattedDate))
             messageOut = self.getTextMessageBody(message)
         elif message.getType() == "media":
             messageOut = self.getMediaMessageBody(message)
         else:
             messageOut = "Unknown message type %s " % message.getType()
-            print(messageOut.toProtocolTreeNode())
 
-        formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%d-%m-%Y %H:%M')
+        formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
         sender = message.getFrom() if not message.isGroupMessage() else "%s/%s" % (
             message.getParticipant(False), message.getFrom())
+               
+        # convert message to json
         output = self.__class__.MESSAGE_FORMAT.format(
             FROM=sender,
+            TO=self.myNumber,
             TIME=formattedDate,
-            MESSAGE=messageOut.encode('latin-1').decode() if sys.version_info >= (3, 0) else messageOut,
-            MESSAGE_ID=message.getId()
+            MESSAGE=messageOut.encode('utf8').decode() if sys.version_info >= (3, 0) else messageOut,
+            MESSAGE_ID=message.getId(),
+            TYPE=message.getType()
         )
 
+        req = urllib.request.Request(self.urlReSendMessage)
+        req.add_header('Content-Type', 'application/json; charset=utf-8')
+
+        jsondataasbytes = output.encode('utf-8')   # needs to be bytes
+        req.add_header('Content-Length', len(jsondataasbytes))
+        req.add_header('TOKEN', self.tokenReSendMessage )
+
+        # resend message to url from configuration
+        try:
+            response = urllib.request.urlopen(req, jsondataasbytes)
+            self.output(response.info())
+        except Exception as e:
+            self.output(e)
+        
         self.output(output, tag=None, prompt=not self.sendReceipts)
+
         if self.sendReceipts:
             self.toLower(message.ack(self.sendRead))
             self.output("Sent delivered receipt" + " and Read" if self.sendRead else "",
                         tag="Message %s" % message.getId())
 
+
     @EventCallback(EVENT_SEND_MESSAGE)
-    def onStateDisconnected(self, layerEvent):
+    def doSendMesage(self, layerEvent):
         content = layerEvent.getArg("msg")
         number = layerEvent.getArg("number")
         self.output("Send Message to %s : %s" % (number, content))
@@ -200,9 +189,6 @@ class QueueLayer(YowInterfaceLayer):
             outgoingMessage = TextMessageProtocolEntity(
                 content.encode("utf-8") if sys.version_info >= (3, 0) else content, to=self.aliasToJid(number))
             self.toLower(outgoingMessage)
-
-
-
 
     def getTextMessageBody(self, message):
         return message.getBody()
@@ -220,60 +206,11 @@ class QueueLayer(YowInterfaceLayer):
             media_url=message.getMediaUrl()
         )
 
-    def doSendMedia(self, mediaType, filePath, url, to, ip=None, caption=None):
-        if mediaType == RequestUploadIqProtocolEntity.MEDIA_TYPE_IMAGE:
-            entity = ImageDownloadableMediaMessageProtocolEntity.fromFilePath(filePath, url, ip, to, caption=caption)
-        elif mediaType == RequestUploadIqProtocolEntity.MEDIA_TYPE_AUDIO:
-            entity = AudioDownloadableMediaMessageProtocolEntity.fromFilePath(filePath, url, ip, to)
-        elif mediaType == RequestUploadIqProtocolEntity.MEDIA_TYPE_VIDEO:
-            entity = VideoDownloadableMediaMessageProtocolEntity.fromFilePath(filePath, url, ip, to, caption=caption)
-        self.toLower(entity)
-
-    def __str__(self):
-        return "CLI Interface Layer"
-
     ########### callbacks ############
 
-    def onRequestUploadResult(self, jid, mediaType, filePath, resultRequestUploadIqProtocolEntity,
-                              requestUploadIqProtocolEntity, caption=None):
-
-        if resultRequestUploadIqProtocolEntity.isDuplicate():
-            self.doSendMedia(mediaType, filePath, resultRequestUploadIqProtocolEntity.getUrl(), jid,
-                             resultRequestUploadIqProtocolEntity.getIp(), caption)
-        else:
-            successFn = lambda filePath, jid, url: self.doSendMedia(mediaType, filePath, url, jid,
-                                                                    resultRequestUploadIqProtocolEntity.getIp(),
-                                                                    caption)
-            mediaUploader = MediaUploader(jid, self.getOwnJid(), filePath,
-                                          resultRequestUploadIqProtocolEntity.getUrl(),
-                                          resultRequestUploadIqProtocolEntity.getResumeOffset(),
-                                          successFn, self.onUploadError, self.onUploadProgress, async=False)
-            mediaUploader.start()
-
-    def onRequestUploadError(self, jid, path, errorRequestUploadIqProtocolEntity, requestUploadIqProtocolEntity):
-        logger.error("Request upload for file %s for %s failed" % (path, jid))
-
-    def onUploadError(self, filePath, jid, url):
-        logger.error("Upload file %s to %s for %s failed!" % (filePath, url, jid))
-
-    def onUploadProgress(self, filePath, jid, url, progress):
-        sys.stdout.write("%s => %s, %d%% \r" % (os.path.basename(filePath), jid, progress))
-        sys.stdout.flush()
-
-    def onGetContactPictureResult(self, resultGetPictureIqProtocolEntiy, getPictureIqProtocolEntity):
-        # do here whatever you want
-        # write to a file
-        # or open
-        # or do nothing
-        # write to file example:
-        # resultGetPictureIqProtocolEntiy.writeToFile("/tmp/yowpics/%s_%s.jpg" % (getPictureIqProtocolEntity.getTo(), "preview" if resultGetPictureIqProtocolEntiy.isPreview() else "full"))
-        pass
-
     def __str__(self):
-        return "CLI Interface Layer"
+        return "Send Recive Interface Layer"
 
     def output(self, str, tag="", prompt=""):
-
-        # print(str)
         logging.info(str)
         pass

@@ -15,7 +15,7 @@ def send():
     type = request.json.get('type')
     body = request.json.get('body')
     address = request.json.get('address')
-    #logger.info('Get message: %s,%s,%s' % (type,body,address))
+    logger.info('Get message: %s,%s,%s' % (type,body,address))
 
     with ClusterRpcProxy(CONFIG) as rpc:
         # asynchronously spawning and email notification

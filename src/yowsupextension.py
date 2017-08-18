@@ -1,4 +1,3 @@
-import queue
 import threading
 
 import pexpect
@@ -11,11 +10,9 @@ from yowsup.layers import YowLayerEvent
 from yowsup.stacks import YowStackBuilder
 from yowsup.layers.auth import AuthError
 
-#import Queue.Queue
-#from Queue import queue
-from axolotl.duplicatemessagexception import DuplicateMessageException
+# from axolotl.duplicatemessagexception import DuplicateMessageException
 
-from src.layer import QueueLayer
+from src.layer import SendReciveLayer
 from yowsup.layers.axolotl.props import PROP_IDENTITY_AUTOTRUST
 
 class YowsupExtension(DependencyProvider):
@@ -25,20 +22,18 @@ class YowsupExtension(DependencyProvider):
         number = self.container.config['YOWSUP_USERNAME']
         password = self.container.config['YOWSUP_PASSWORD']
 
-        credentials = (number, password)  # replace with your phone and password
+        tokenReSendMessage = self.container.config['TOKEN_RESEND_MESSAGES']
+        urlReSendMessage = self.container.config['ENDPOINT_RESEND_MESSAGES']
 
-        sendQueue = queue.Queue()
+        credentials = (number, password)  # replace with your phone and password
 
         stackBuilder = YowStackBuilder()
         self.stack = stackBuilder \
             .pushDefaultLayers(True) \
-            .push(QueueLayer(sendQueue)) \
+            .push(SendReciveLayer(tokenReSendMessage,urlReSendMessage,number)) \
             .build()
 
-        # .push(YowMediaProtocolLayer) \
-
-
-
+ 
         self.stack.setCredentials(credentials)
         self.stack.setProp(PROP_IDENTITY_AUTOTRUST, True)
         #self.stack.broadcastEvent(YowLayerEvent(YowsupCliLayer.EVENT_START))
@@ -54,6 +49,8 @@ class YowsupExtension(DependencyProvider):
                 self.stack.loop(timeout=0.5, discrete=0.5)
             except AuthError as e:
                 self.output("Auth Error, reason %s" % e)
+            except ValueError as e:  
+                self.output(e);              
             except KeyboardInterrupt:
                 self.output("\nYowsdown KeyboardInterrupt")
                 exit(0)
@@ -67,19 +64,15 @@ class YowsupExtension(DependencyProvider):
         t1.start()
 
 
-
-
-
     def sendTextMessage(self, address,message):
         self.output('Trying to send Message to %s:%s' % (address, message))
-        messageCommand = '/message send %s "%s"' % (address, message)
-        self.stack.broadcastEvent(YowLayerEvent(name=QueueLayer.EVENT_SEND_MESSAGE, msg=message, number=address))
+      
+        self.stack.broadcastEvent(YowLayerEvent(name=SendReciveLayer.EVENT_SEND_MESSAGE, msg=message, number=address))
         return True
 
     def get_dependency(self, worker_ctx):
         return self
-    def output(self, str):
 
-        #print(str)
+    def output(self, str):
         logging.info(str)
         pass
