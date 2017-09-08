@@ -12,7 +12,7 @@ Use yowsup-cli to register a Number.
 ### Installation(General):
 
 1. Install rabbitmq
-2. Install Flask,Nameko,Flasgger
+2. Install Flask,Nameko,Flasgger,pexpect
 3. Install yowsup2
 
 ### Installation(on Ubuntu):
@@ -23,6 +23,7 @@ sudo apt-get install python3-pip python3-dev
 pip3 install nameko
 pip3 install flask
 pip3 install flasgger
+pip3 install pexpect
 # git+https://github.com/tgalal/yowsup@master works fine
 pip3 install git+https://github.com/tgalal/yowsup@master 
 
@@ -35,6 +36,9 @@ apt-get install rabbitmq-server
 ### Configuration:
 
 rename "service.yml.sample to "service.yml" and put your credentials into it.
+
+in api.py change 
+'pyamqp://guest:guest@localhost'
 
 ### Usage:
 

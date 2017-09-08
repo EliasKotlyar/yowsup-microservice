@@ -1,4 +1,4 @@
-AMQP_URI: !env_var '${AMQP_URI}'
+AMQP_URI: 'pyamqp://guest:guest@localhost'
 WEB_SERVER_ADDRESS: '0.0.0.0:8000'
 YOWSUP_USERNAME: !env_var '${USERNAME}'
 YOWSUP_PASSWORD: !env_var '${PASSWORD}'

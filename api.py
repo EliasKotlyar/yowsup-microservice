@@ -8,7 +8,7 @@ import os
 app = Flask(__name__)
 Swagger(app)
 CONFIG = {'AMQP_URI': None}
-CONFIG['AMQP_URI'] = os.environ['AMQP_URI']
+CONFIG['AMQP_URI'] = 'pyamqp://guest:guest@localhost'
 
 @app.route('/send', methods=['POST'])
 @swag_from('docs/send.yml')
@@ -26,5 +26,4 @@ def send():
     msg = "The message was sucessfully sended to the queue"
     return msg, 200
 
-if __name__ == "__main__":
-	app.run(host='0.0.0.0', port=80)
+app.run(debug=True)
