@@ -7,7 +7,7 @@ Install & Configure the yowsup2 CLI Demo.
 
 Use yowsup-cli to register a Number.
 
-
+## Without Docker
 
 ### Installation(General):
 
@@ -35,10 +35,8 @@ apt-get install rabbitmq-server
 
 ### Configuration:
 
-rename "service.yml.sample to "service.yml" and put your credentials into it.
+rename *service.yml.sample* to *service.yml* and put your credentials into it.
 
-in api.py change 
-'pyamqp://guest:guest@localhost'
 
 ### Usage:
 
@@ -52,12 +50,8 @@ Run the the Api with:
 startapi.sh
 ```
 
-
-
 Go to:
 http://127.0.0.1:5000/apidocs/index.html
-
-
 
 
 ### Example Messages for other Integrations:
@@ -72,24 +66,30 @@ nameko shell
 n.rpc.yowsup.send(type="simple", body="This is a test Message!", address="49XXXX")
 ```
 
-### Using Docker to run in a container
+## Using Docker to run in a container
 
-This will automatically setup and run the main service and the API, connected with the RabbitMQ service!
+This will automatically setup and run the main service and the API
 
-Change the following environment variables with your credentials (after registering on yowsup-cli).
+Change the following environment variables with your credentials (after registering on yowsup-cli) in *env.list* file.
+Or create a new env.list file
 
 ```
-environment:
-  - USERNAME=<your_account_number>
-  - PASSWORD=<your_password>
-  - TOKEN_RESEND_MESSAGES=<your_token_resend_messages>
-  - ENDPOINT_RESEND_MESSAGES=<your_endpoint_resend_messages>
+USERNAME=<your_account_number>
+PASSWORD=<your_password>
+TOKEN_RESEND_MESSAGES=<your_token_resend_messages>
+ENDPOINT_RESEND_MESSAGES=<your_endpoint_resend_messages>
 ```
 
 Then run:
 
 ```
-docker stack deploy -c docker-compose.yml yowsup
+docker run --name <name> --env-file env.list gabrieltandil/yowsup-microservice:latest
 ```
 
 And you're all set!! :D
+
+### Build docker image
+
+```
+docker build -t yowsup-microservice:latest .
+```
