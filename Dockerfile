@@ -5,10 +5,11 @@ WORKDIR /app
 
 ADD . /app
 
+ENV DEBIAN_FRONTEND noninteractive
+
 RUN apt-get update
 RUN apt-get install -y apt-utils
-RUN apt-get install -y python3-pip python3-dev
-RUN apt-get install -y rabbitmq-server
+RUN apt-get install -y python3-pip python3-dev rabbitmq-server
 RUN pip3 install -r requirements.txt
 
 EXPOSE 80
