@@ -44,3 +44,8 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+
+.project
+.pydevproject
+__pycache__/
+src/__pycache__/

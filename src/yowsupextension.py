@@ -17,10 +17,9 @@ from yowsup.layers.axolotl.props import PROP_IDENTITY_AUTOTRUST
 
 class YowsupExtension(DependencyProvider):
     def setup(self):
-        self.output('Starting YowsUP...')
-
-        number = self.container.config['YOWSUP_USERNAME']
+        number = str(self.container.config['YOWSUP_USERNAME'])
         password = self.container.config['YOWSUP_PASSWORD']
+        self.output('Starting YowsUP...' + number + '.')
 
         tokenReSendMessage = self.container.config['TOKEN_RESEND_MESSAGES']
         urlReSendMessage = self.container.config['ENDPOINT_RESEND_MESSAGES']
