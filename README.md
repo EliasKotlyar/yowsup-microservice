@@ -69,6 +69,7 @@ n.rpc.yowsup.send(type="simple", body="This is a test Message!", address="49XXXX
 ## Using Docker to run in a container
 
 This will automatically setup and run the main service and the API
+The service is exposed in port 80
 
 Change the following environment variables with your credentials (after registering on yowsup-cli) in *env.list* file.
 Or create a new env.list file
@@ -83,7 +84,7 @@ ENDPOINT_RESEND_MESSAGES=<your_endpoint_resend_messages>
 Then run:
 
 ```
-docker run --name <name> --env-file env.list gabrieltandil/yowsup-microservice:latest
+docker run --name <name> --env-file env.list -p <hostPort>:80 gabrieltandil/yowsup-microservice:latest
 ```
 
 And you're all set!! :D
