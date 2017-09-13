@@ -1,4 +1,4 @@
-FROM python:3-stretch
+FROM python:latest
 LABEL maintainer="gabriel.tandil@gmail.com"
 
 WORKDIR /app
