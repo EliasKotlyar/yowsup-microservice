@@ -1,7 +1,7 @@
 # yowsup-microservice
 This Project provides a microservice which implements an interface to yowsup2. You can Send/Receive Whatsapp-Messages with any language of your choice.
 
-### Prerequisites:
+### Prerequisites
 
 Install & Configure the yowsup2 CLI Demo.
 
@@ -9,13 +9,13 @@ Use yowsup-cli to register a Number.
 
 ## Without Docker
 
-### Installation(General):
+### Installation (General)
 
 1. Install rabbitmq
 2. Install Flask,Nameko,Flasgger,pexpect
 3. Install yowsup2
 
-### Installation(on Ubuntu):
+### Installation (on Ubuntu)
 
 ```bash
 # Install Python Stuff:
@@ -33,12 +33,12 @@ apt-get install rabbitmq-server
 ```
 
 
-### Configuration:
+### Configuration
 
 rename *service.yml.sample* to *service.yml* and put your credentials into it.
 
 
-### Usage:
+### Usage
 
 Run the the Service with:
 ```
@@ -49,10 +49,16 @@ Run the the Api with:
 ```
 startapi.sh
 ```
-
+#### Send
 Go to:
 http://127.0.0.1:5000/apidocs/index.html
 
+#### Recive
+Set the parameter ENDPOINT_RESEND_MESSAGES to the url of your application where you want the messages to be dispatched.
+The received messages will be sent to that url in JSON format.
+```
+{{"from":"{FROM}","to":"{TO}","time":"{TIME}","id":"{MESSAGE_ID}","message":"{MESSAGE}","type":"{TYPE}"}}
+```
 
 ### Example Messages for other Integrations:
 
