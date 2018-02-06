@@ -86,7 +86,7 @@ PASSWORD=<your_password>
 TOKEN_RESEND_MESSAGES=<your_token_resend_messages>
 ENDPOINT_RESEND_MESSAGES=<your_endpoint_resend_messages>
 ```
-- *TOKEN_RESEND_MESSAGES: a value any value established by you that will be sent in the request to validate the identity.*
+- *TOKEN_RESEND_MESSAGES: any value established by you that will be sent in the request to validate the identity.*
 - *ENDPOINT_RESEND_MESSAGES: the url where messages received from the whatsapp network will be sent in the specified json format.*
 
 Then run:
