@@ -14,9 +14,9 @@ class yowsup(object):
     def send(self, type, body, address):
         logging.info('Get message: %s,%s,%s' % (type, body, address))
         if(type == "simple"):
-            output = self.y.sendTextMessage(address, body)
+            self.y.sendTextMessage(address, body)
         elif(type == "media"):
-            output = self.y.sendMediaMessage(address, body)
+            self.y.sendMediaMessage(address, body)
 
         return True
         #pprint(self)

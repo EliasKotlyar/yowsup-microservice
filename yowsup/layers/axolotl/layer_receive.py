@@ -200,8 +200,7 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
             self.handleImageMessage(node, m.image_message)
 
         if not handled:
-            print(m)
-            raise ValueError("Unhandled")
+            self.handleUnhandledMessage(node, m)
 
     def handleSenderKeyDistributionMessage(self, senderKeyDistributionMessage, axolotlAddress):
         groupId = senderKeyDistributionMessage.groupId
@@ -237,6 +236,27 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
 
         self.toUpper(messageNode)
 
+    def handleUnhandledMessage(self, originalEncNode, message):
+        messageNode = copy.deepcopy(originalEncNode)
+        messageNode["type"] = "media"
+        mediaNode = ProtocolTreeNode("media", {
+            "type": "video",
+            "filehash": "",
+            "size": "0",
+            "url": "",
+            "mimetype": "video/x-flv",
+            "width": "0",
+            "height": "0",
+            "caption": "mensaje no decodificado",
+            "encoding": "raw",
+            "file": "enc",
+            "ip": "0",
+            "mediakey": "22"
+        }, data = "unhandled")
+        messageNode.addChild(mediaNode)
+
+        self.toUpper(messageNode)
+
     def handleUrlMessage(self, originalEncNode, urlMessage):
         #convert to ??
         pass
@@ -250,7 +270,7 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
         messageNode["type"] = "media"
         mediaNode = ProtocolTreeNode("media", {
             "latitude": locationMessage.degrees_latitude,
-            "longitude": locationMessage.degress_longitude,
+            "longitude": locationMessage.degrees_longitude,
             "name": "%s %s" % (locationMessage.name, locationMessage.address),
             "url": locationMessage.url,
             "encoding": "raw",

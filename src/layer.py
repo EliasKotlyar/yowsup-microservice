@@ -22,13 +22,18 @@ from yowsup.common.tools import Jid
 from yowsup.common.optionalmodules import PILOptionalModule, AxolotlOptionalModule
 import urllib.request
 import base64
-logger = logging.getLogger(__name__)
+from time import sleep
 
+logger = logging.getLogger(__name__)
+STATUS_FILES_DIRECTORY = '/tmp/statuses/'
+RECONNECT_TIMEOUT = 2
+# set -1 if it has to reconnect until it finally reconnects
+RECONNECT_ATTEMPTS = 30
 
 class SendReciveLayer(YowInterfaceLayer):
 
 
-    MESSAGE_FORMAT = "{{\"from\":\"{FROM}\",\"to\":\"{TO}\",\"time\":\"{TIME}\",\"id\":\"{MESSAGE_ID}\",\"message\":{MESSAGE},\"type\":\"{TYPE}\"}}"
+    MESSAGE_FORMAT = "{{\"from\":\"{FROM}\",\"to\":\"{TO}\",\"time\":\"{TIME}\",\"id\":\"{MESSAGE_ID}\",\"message\":{MESSAGE},\"type\":\"{TYPE}\",\"notify\":\"{NOTIFY}\"}}"
 
     DISCONNECT_ACTION_PROMPT = 0
 
@@ -108,6 +113,12 @@ class SendReciveLayer(YowInterfaceLayer):
         # formattedDate = datetime.datetime.fromtimestamp(self.sentCache[entity.getId()][0]).strftime('%d-%m-%Y %H:%M')
         # print("%s [%s]:%s"%(self.username, formattedDate, self.sentCache[entity.getId()][1]))
         if entity.getClass() == "message":
+            status_filename = STATUS_FILES_DIRECTORY + 'lock'
+            try:
+                with open(status_filename, 'w') as file:
+                    file.write('success')
+            except Exception as e:
+                self.output('Could not write to file {}. Exception: {}'.format(status_filename, str(e)))
             self.output(entity.getId(), tag="Sent")
             # self.notifyInputThread()
 
@@ -141,8 +152,12 @@ class SendReciveLayer(YowInterfaceLayer):
             messageOut = '"' + self.getTextMessageBody(message) + '"'
         elif message.getType() == "media" and message.getMediaType() in ("image", "audio", "video"):
             messageOut = self.getMediaMessageBody(message)
+        elif message.getType() == "media" and message.getMediaType() == "location":
+            messageOut = self.getLocationMessageBody(message)
+        elif message.getType() == "media" and message.getMediaType() == "vcard":
+            messageOut = self.getVCardMessageBody(message)                        
         else:
-            messageOut = "Unknown message type %s " % message.getType()
+            messageOut = "Unknown message type %s, %s " % (message.getType(),message.getMediaType())
 
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
         sender = message.getFrom() if not message.isGroupMessage() else "%s/%s" % (
@@ -155,7 +170,8 @@ class SendReciveLayer(YowInterfaceLayer):
             TIME=formattedDate,
             MESSAGE=messageOut.encode('utf8').decode() if sys.version_info >= (3, 0) else messageOut,
             MESSAGE_ID=message.getId(),
-            TYPE=message.getType()
+            TYPE=message.getType(),
+            NOTIFY=message.getNotify(),
         )
 
         req = urllib.request.Request(self.urlReSendMessage)
@@ -183,19 +199,42 @@ class SendReciveLayer(YowInterfaceLayer):
     def doSendMesage(self, layerEvent):
         content = layerEvent.getArg("msg")
         number = layerEvent.getArg("number")
-        self.output("Send Message to %s : %s" % (number, content))
+        
         jid = number
 
         if self.assertConnected():
-            outgoingMessage = TextMessageProtocolEntity(
-                content.encode("utf-8") if sys.version_info >= (3, 0) else content, to=self.aliasToJid(number))
-            self.toLower(outgoingMessage)
+            self.send_message(content,number)
+            self.output("Send Message to %s : %s" % (number, content))
+        else:
+            reconnect = False
+            reconnect = self.reconnecting()
+
+            if(reconnect):
+                self.send_message(content,number)
+                self.output("Send Message to %s : %s" % (number, content))
+
+    def send_message(self,content,number):
+        outgoingMessage = TextMessageProtocolEntity(
+        content.encode("utf-8") if sys.version_info >= (3, 0) else content, to=self.aliasToJid(number))
+
+        self.toLower(outgoingMessage)
+
+    def reconnecting(self):
+        attempts = 0
+        while (attempts < RECONNECT_ATTEMPTS or RECONNECT_ATTEMPTS == -1) and not self.connected:
+            attempts += 1
+            self.output('Reconnecting... Attempt {}'.format(attempts))
+            self.connect()
+            sleep(RECONNECT_TIMEOUT)
+        return self.connected
 
     def getTextMessageBody(self, message):
         return message.getBody()
 
     def getMediaMessageBody(self, message):
-        if message.getMediaType() in ("image", "audio", "video"):
+        if message.getMediaSize()==0:
+            return "[Media Type: unhandled]"
+        elif message.getMediaType() in ("image", "audio", "video"):
             return self.getDownloadableMediaMessageBody(message)
         else:
             return "[Media Type: %s]" % message.getMediaType()
@@ -207,6 +246,22 @@ class SendReciveLayer(YowInterfaceLayer):
             media_url=message.getMediaUrl(),
 	        media_content=base64.b64encode(message.getMediaContent()).decode(),
             media_caption=message.getCaption()
+        )
+
+    def getLocationMessageBody(self, message):
+        return "{{\"type\":\"{media_type}\",\"latitude\":\"{latitude}\",\"longitude\":\"{longitude}\",\"url\":\"{url}\",\"name\":\"{name}\"}}".format(
+            media_type=message.getMediaType(),
+            latitude=message.getLatitude(),
+            longitude=message.getLongitude(),
+            name=message.getLocationName(),
+            url=message.getLocationURL()
+        )        
+        
+    def getVCardMessageBody(self, message):
+        return "{{\"type\":\"{media_type}\",\"name\":\"{name}\",\"card_data\":\"{card_data}\"}}".format(
+            media_type=message.getMediaType(),
+            name=message.getName(),
+            card_data=message.getCardData().replace('"', '\\"').replace('\n', '\\n'),
         )
 
     def doSendMedia(self, mediaType, filePath, url, to, ip = None, caption = None):
