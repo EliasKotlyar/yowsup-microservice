@@ -13,16 +13,14 @@ class yowsup(object):
     @rpc
     def send(self, type, body, address):
         logging.info('Get message: %s,%s,%s' % (type, body, address))
-        output = self.y.sendTextMessage(address, body)
-
+        if(type == "simple"):
+            output = self.y.sendTextMessage(address, body)
+        elif(type == "media"):
+            output = self.y.sendMediaMessage(address, body)
 
         return True
         #pprint(self)
         #logging.info(self.y)
         #output = self.y.sendCommand('Test')
         #logging.info(output)
-
-
-
-
 
