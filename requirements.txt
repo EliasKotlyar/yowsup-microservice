@@ -2,3 +2,6 @@ nameko
 flask
 flasgger
 pexpect
+python-dateutil
+pycrypto
+python-axolotl
