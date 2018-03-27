@@ -1,3 +1,9 @@
+# NEWS
+The **media** branch has image recibe (and some other media) capabilities. Also reconnect and minor imporovements. Thanks to all colaborators.
+
+## Media version docker image
+gabrieltandil/yowsup-microservice:media
+
 # yowsup-microservice
 This Project provides a microservice which implements an interface to yowsup2. You can Send/Receive Whatsapp-Messages with any language of your choice.
 
