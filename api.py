@@ -23,7 +23,7 @@ def send():
         # asynchronously spawning and email notification
         rpc.yowsup.send(type,body,address)
 
-    msg = "The message was sucessfully sended to the queue"
+    msg = "The message was successfully sent to the queue"
     return msg, 200
 
 if __name__ == "__main__":
